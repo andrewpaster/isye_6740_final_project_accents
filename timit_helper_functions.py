@@ -2,6 +2,7 @@ import os
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
+import time
 
 def timit_vocabulary(file_path):
 
@@ -75,7 +76,6 @@ def plot_wave_file(data_path, speaker_id, sentence_code):
                                  header=None, names=['nsam_start', 'nsam_end', 'phoneme'])
     phon_df[['nsam_start', 'nsam_end']] = phon_df[['nsam_start', 'nsam_end']].astype('i')
 
-
     sr, ws = wavfile.read(os.path.join(data_path, 'data', audio_file_path))
     w = ws / max(ws)
     fig, ax = plt.subplots(2, figsize=(18, 8), sharex=True)
@@ -93,15 +93,127 @@ def plot_wave_file(data_path, speaker_id, sentence_code):
 
     plt.savefig('{}_{}_{}'.format(speaker_id, sentence_code, dialect_region))
 
+def word_sounds(data_file,
+                data_dir='../data/archive/data/',
+                output_directory='train'):
+
+    # reference: https://www.kaggle.com/mfekadu/extract-all-words-from-timit
+
+    RATE = 16000  # KHz
+
+    # get training data audio file meta data
+    df = pd.read_csv(data_file)
+    df = df[df['is_converted_audio'] == True].reset_index()
+    df['filepath'] = df.apply(lambda row: os.path.join(data_dir,
+                                                                   row['test_or_train'],
+                                                                   row['dialect_region'],
+                                                                   row['speaker_id'],
+                                                                   row['filename']), axis=1)
+
+    wav_files = df['filepath']
+    audio_data = [wavfile.read(wav)[1] for wav in wav_files]
+
+    time_aligned_words = [parse_wrd_timestamps(w.replace('.WAV.wav', '') + '.WRD') for w in wav_files]
+    word_aligned_audio = parse_word_waves(time_aligned_words, audio_data)
+
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+    i = 1
+    for sentence in word_aligned_audio:
+        for word_tup in sentence:
+            timestamp = time.strftime("%m%d%Y%H%M%S", time.localtime())
+            data, word, speaker, sentence, region, train_or_test, gender = word_tup
+            # gender = 'gender-speaker-id'
+            # location = 'unknown-location'
+            # loudness = 'unknown-loudness'
+            # lastname = 'lastname-speaker-id'
+            # firstname = 'firstname-speaker-id'
+            nametag = 'timit'
+            description = speaker + '-' + sentence + '-' + str(i)
+            filename = word + '_' + gender + '_' + description + '_' + region
+            filename += '_' + timestamp + '_' + nametag
+            filename += '.wav'
+
+            # filenames cannot have single quotes
+            filename = filename.replace("'", '')
+
+            wavfile.write(data=data, filename=output_directory + '/' + filename, rate=RATE)
+            # print(data, filename)
+            i += 1
+
+
+# Given a file path to the .WRD file
+# Output a list of tuples containing (start, end, word, speaker_id, sentence_id)
+def parse_wrd_timestamps(wrd_path, verbose=False):
+    print('wrd_path', wrd_path) if verbose else None
+    speaker_id = wrd_path.split('/')[-2]
+    sentence_id = wrd_path.split('/')[-1].replace('.WRD', '')
+    region_id = wrd_path.split('/')[-3]
+    train_or_test = wrd_path.split('/')[-4]
+    gender = wrd_path.split('/')[-2][0].lower()
+
+    wrd_file = open(wrd_path)
+    content = wrd_file.read()
+    content = content.split('\n')
+
+    # print('content b4 tuple', content) if verbose else None
+    content = [tuple(foo.split(' ') + [speaker_id,
+                                       sentence_id,
+                                       region_id,
+                                       train_or_test,
+                                       gender]) for foo in content if foo != '']
+    wrd_file.close()
+
+    return content
+
+
+# Given both a time_aligned_words file && the output of read_audio()
+# Output the another list of tuples containing (audio_data, label)
+# e.g.
+# [(array([ 2, 2, -3, ... , 3, 6, 1], dtype=int16), critical),
+#   ... ((array([ 5, -6, 4, ... , 1, 3, 3], dtype=int16),maintenance)]
+def parse_word_waves(time_aligned_words, audio_data, verbose=False):
+    return [align_data(data, words, verbose) for data, words in zip(audio_data, time_aligned_words)]
+
+
+# given numpy wave array and time alignment details
+# output a list of each data with its word
+def align_data(data, words, verbose=False):
+    aligned = []
+    print('len(data)', len(data)) if verbose else None
+    print('len(words)', len(words)) if verbose else None
+    print('data', data) if verbose else None
+    print('words', words) if verbose else None
+    for tup in words:
+        print('tup', tup) if verbose else None
+        start = int(tup[0])
+        end = int(tup[1])
+        word = tup[2]
+        speaker_id = tup[3]
+        sentence_id = tup[4]
+        region_id = tup[5]
+        train_test = tup[6]
+        gender = tup[7]
+        assert start >= 0
+        assert end <= len(data)
+        aligned.append((data[start:end], word, speaker_id, sentence_id, region_id, train_test, gender))
+    assert len(aligned) == len(words)
+    return aligned
+
+
 if __name__ == "__main__":
 
     # word_list = timit_vocabulary('../data/archive/TIMITDIC.TXT')
     # print(word_list[0:20])
 
-    plot_wave_file('../data/archive/', 'FALR0', 'SX335')
-    plot_wave_file('../data/archive/', 'MDCD0', 'SX335')
-    plot_wave_file('../data/archive/', 'FEME0', 'SX335')
-    plot_wave_file('../data/archive/', 'FGMB0', 'SX335')
-    plot_wave_file('../data/archive/', 'MBBR0', 'SX335')
-    plot_wave_file('../data/archive/', 'MTPF0', 'SX335')
-    plot_wave_file('../data/archive/', 'MRDM0', 'SX335')
+    # plot_wave_file('../data/archive/', 'FALR0', 'SX335')
+    # plot_wave_file('../data/archive/', 'MDCD0', 'SX335')
+    # plot_wave_file('../data/archive/', 'FEME0', 'SX335')
+    # plot_wave_file('../data/archive/', 'FGMB0', 'SX335')
+    # plot_wave_file('../data/archive/', 'MBBR0', 'SX335')
+    # plot_wave_file('../data/archive/', 'MTPF0', 'SX335')
+    # plot_wave_file('../data/archive/', 'MRDM0', 'SX335')
+
+    word_sounds('../data/archive/train_data.csv', '../data/archive/data/', 'train')
+    word_sounds('../data/archive/test_data.csv', '../data/archive/data/', 'test')
