@@ -41,33 +41,34 @@ ax.set(title='MFCC')
 
 
 
-mfccs_array = np.empty((0, 12), float)
-indices= []
-columns = ['feature_' + str(x) for x in range(1,13,1)]
-gender = []
-word = []
+#mfccs_array = np.empty((0, 12), float)
+#indices= []
+#columns = ['feature_' + str(x) for x in range(1,13,1)]
+#gender = []
+#word = []
 
-for filename in os.listdir('train/'):
-    
-#    if "a" == filename.split('_')[0]: 
-        
-    try:
-        y, sr = librosa.load('train/' + filename, sr=None)
-        mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=12)         
-        indices.append(filename.split('_')[3])
-        gender.append(filename.split('_')[1])
-        word.append(filename.split('_')[0])
-        mfccs_array = np.append(mfccs_array, np.average(mfccs, axis=1).reshape(1,12), axis=0)
-    except:
-        print('could not use word {}'.format(filename.split('_')[0]))
+#for filename in os.listdir('train/'):
+#    
+##    if "a" == filename.split('_')[0]: 
+#        
+#    try:
+#        y, sr = librosa.load('train/' + filename, sr=None)
+#        mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=12)         
+#        indices.append(filename.split('_')[3])
+#        gender.append(filename.split('_')[1])
+#        word.append(filename.split('_')[0])
+#        mfccs_array = np.append(mfccs_array, np.average(mfccs, axis=1).reshape(1,12), axis=0)
+#    except:
+#        print('could not use word {}'.format(filename.split('_')[0]))
+#
+#df = pd.DataFrame(mfccs_array, columns=columns, index=indices)
+#df['accent'] = df.index
+#df['gender'] = gender
+#df['word'] = word
 
-df = pd.DataFrame(mfccs_array, columns=columns, index=indices)
-df['accent'] = df.index
-df['gender'] = gender
-df['word'] = word
 
+#df.to_csv('all_words_mfcc.csv')
 
-df.to_csv('all_words_mfcc.csv')
 df = pd.read_csv('all_words_mfcc.csv')
 
 
@@ -77,8 +78,8 @@ pca = PCA(n_components=2)
 df_pca = pca.fit_transform(df.drop(['Unnamed: 0','accent', 'word', 'gender', 'feature_1', 'feature_2', 'feature_12', 'feature_11'], axis=1))
 df_pca = pd.DataFrame(df_pca, columns=['c1', 'c2'])
 df_pca.index = df.index
-df_pca['accent'] = df_pca.index
-df_pca['gender'] = gender
+#df_pca['accent'] = df_pca.index
+#df_pca['gender'] = gender
 
 df_pca['accent'] = df['accent']
 df_pca['gender'] = df['gender']
@@ -86,15 +87,15 @@ df_pca['gender'] = df['gender']
 
 sns.scatterplot(data=df_pca[df['word'] == 'wash'], x='c1', y='c2', hue='accent', alpha=0.8)
 
-from sklearn import preprocessing
 from sklearn.ensemble import RandomForestClassifier
-le = preprocessing.LabelEncoder()
-
-y = le.fit_transform(df['accent'])
 
 parameters = {'n_estimators':[1, 100, 1000]}
 rf = RandomForestClassifier()
 clf = GridSearchCV(rf, parameters, scoring='accuracy')
 clf.fit(df[(df.accent.isin(['DR7', 'DR1'])) & (df.word=='a')].drop(['Unnamed: 0', 'gender', 'word', 'accent'],axis=1), df[(df.accent.isin(['DR7', 'DR1'])) & (df.word=='a')]['accent'])
 
+print(clf.best_score_)
+
 clf.fit(df[(df.accent.isin(['DR7', 'DR1']))].drop(['Unnamed: 0', 'gender', 'word', 'accent'],axis=1), df[(df.accent.isin(['DR7', 'DR1']))]['accent'])
+
+print(clf.best_score_)
