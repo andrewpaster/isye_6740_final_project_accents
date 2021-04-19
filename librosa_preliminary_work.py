@@ -72,10 +72,10 @@ ax.set(title='MFCC')
 df = pd.read_csv('all_words_mfcc.csv')
 
 
-sns.scatterplot(data=df, x='feature_5', y='feature_6', hue='gender')
+sns.scatterplot(data=df, x='feature_5', y='feature_6', hue='word')
 
 pca = PCA(n_components=2)
-df_pca = pca.fit_transform(df.drop(['Unnamed: 0','accent', 'word', 'gender', 'feature_1', 'feature_2', 'feature_12', 'feature_11'], axis=1))
+df_pca = pca.fit_transform(df[['feature_10', 'feature_11', 'feature_12']])
 df_pca = pd.DataFrame(df_pca, columns=['c1', 'c2'])
 df_pca.index = df.index
 #df_pca['accent'] = df_pca.index
@@ -83,9 +83,12 @@ df_pca.index = df.index
 
 df_pca['accent'] = df['accent']
 df_pca['gender'] = df['gender']
+df_pca['word'] = df['word']
 
+sns.scatterplot(data=df_pca[df['word'].isin(['wash'])], x='c1', y='c2', hue='accent', alpha=0.8)
 
-sns.scatterplot(data=df_pca[df['word'] == 'wash'], x='c1', y='c2', hue='accent', alpha=0.8)
+sns.scatterplot(data=df_pca[df['word'].isin(['carry', 'greasy', 'wash'])], x='c1', y='c2', hue='word', alpha=0.9)
+
 
 from sklearn.ensemble import RandomForestClassifier
 
@@ -96,6 +99,6 @@ clf.fit(df[(df.accent.isin(['DR7', 'DR1'])) & (df.word=='a')].drop(['Unnamed: 0'
 
 print(clf.best_score_)
 
-clf.fit(df[(df.accent.isin(['DR7', 'DR1']))].drop(['Unnamed: 0', 'gender', 'word', 'accent'],axis=1), df[(df.accent.isin(['DR7', 'DR1']))]['accent'])
+clf.fit(df[(df.accent.isin(['DR7', 'DR1'])) & (df.gender == 'm')].drop(['Unnamed: 0', 'gender', 'word', 'accent'],axis=1), df[(df.accent.isin(['DR7', 'DR1'])) & (df.gender == 'm')]['accent'])
 
 print(clf.best_score_)
