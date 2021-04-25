@@ -111,7 +111,7 @@ def phoneme_sounds(data_file,
                                                                    row['speaker_id'],
                                                                    row['filename']), axis=1)
 
-    wav_files = df['filepath']
+    wav_files = df['filepath'][0:100]
     print('reading audio data')
     audio_data = [wavfile.read(wav)[1] for wav in wav_files]
 
