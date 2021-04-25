@@ -111,7 +111,7 @@ def phoneme_sounds(data_file,
                                                                    row['speaker_id'],
                                                                    row['filename']), axis=1)
 
-    wav_files = df['filepath'][0:20]
+    wav_files = df['filepath']
     print('reading audio data')
     audio_data = [wavfile.read(wav)[1] for wav in wav_files]
 
@@ -129,7 +129,7 @@ def phoneme_sounds(data_file,
     for sentence in word_aligned_audio:
         for word_tup in sentence:
             timestamp = time.strftime("%m%d%Y%H%M%S", time.localtime())
-            data, word, speaker, sentence, region, train_or_test, gender = word_tup
+            data, phoneme, word, speaker, sentence, region, train_or_test, gender = word_tup
             # gender = 'gender-speaker-id'
             # location = 'unknown-location'
             # loudness = 'unknown-loudness'
@@ -137,7 +137,7 @@ def phoneme_sounds(data_file,
             # firstname = 'firstname-speaker-id'
             nametag = 'timit'
             description = speaker + '-' + sentence + '-' + str(i)
-            filename = word + '_' + gender + '_' + description + '_' + region
+            filename = phoneme + '_' + word + '_' + gender + '_' + description.replace('.PHN', '') + '_' + region
             filename += '_' + timestamp + '_' + nametag
             filename += '.wav'
 
@@ -152,6 +152,7 @@ def phoneme_sounds(data_file,
 # Given a file path to the .WRD file
 # Output a list of tuples containing (start, end, word, speaker_id, sentence_id)
 def parse_wrd_timestamps(wrd_path, verbose=False):
+    
     print('wrd_path', wrd_path) if verbose else None
     speaker_id = wrd_path.split('/')[-2]
     sentence_id = wrd_path.split('/')[-1].replace('.WRD', '')
@@ -176,22 +177,22 @@ def parse_wrd_timestamps(wrd_path, verbose=False):
     final_content = []
     for record in product(content, wrd_content):
         
-        if 
         phm_start, phm_end, phm = record[0].split(' ')
         wrd_start, wrd_end, wrd = record[1].split(' ')
         
+        if phm_start >= wrd_start and phm_start < wrd_end:
+            
+            final_content.append([phm_start, phm_end, phm, wrd])
+                
         
-        
-        
-        
-    content = [(x[0].split(' ')[0]], x[0].split(' ')[1], x[0].split(' ')[2], x[1].split(' ')[2]) for x in product(content, wrd_content)\
-               if (int(x[0].split(' ')[0]) >= int(x[1].split(' ')[0])) and (int(x[0].split(' ')[0]) < int(x[1].split(' ')[1]))]
+    # content = [(x[0].split(' ')[0]], x[0].split(' ')[1], x[0].split(' ')[2], x[1].split(' ')[2]) for x in product(content, wrd_content)\
+    #            if (int(x[0].split(' ')[0]) >= int(x[1].split(' ')[0])) and (int(x[0].split(' ')[0]) < int(x[1].split(' ')[1]))]
     
-    content = [tuple(foo.split(' ') + [speaker_id,
+    content = [tuple(foo + [speaker_id,
                                    sentence_id,
                                    region_id,
                                    train_or_test,
-                                   gender]) for foo in content if foo != '']
+                                   gender]) for foo in final_content if foo != '']
     phm_file.close()
     wrd_file.close()
 
@@ -219,15 +220,16 @@ def align_data(data, words, verbose=False):
         print('tup', tup) if verbose else None
         start = int(tup[0])
         end = int(tup[1])
-        word = tup[2]
-        speaker_id = tup[3]
-        sentence_id = tup[4]
-        region_id = tup[5]
-        train_test = tup[6]
-        gender = tup[7]
+        phoneme = tup[2]
+        word = tup[3]
+        speaker_id = tup[4]
+        sentence_id = tup[5]
+        region_id = tup[6]
+        train_test = tup[7]
+        gender = tup[8]
         assert start >= 0
         assert end <= len(data)
-        aligned.append((data[start:end], word, speaker_id, sentence_id, region_id, train_test, gender))
+        aligned.append((data[start:end], phoneme, word, speaker_id, sentence_id, region_id, train_test, gender))
     assert len(aligned) == len(words)
     return aligned
 
@@ -245,5 +247,5 @@ if __name__ == "__main__":
     # plot_wave_file('../data/archive/', 'MTPF0', 'SX335')
     # plot_wave_file('../data/archive/', 'MRDM0', 'SX335')
 
-    phoneme_sounds('../data/archive/train_data.csv', '../data/archive/data/', 'phoneme_train')
-    # phoneme_sounds('../data/archive/test_data.csv', '../data/archive/data/', 'phoneme_test')
+    # phoneme_sounds('../data/archive/train_data.csv', '../data/archive/data/', 'phoneme_train')
+    phoneme_sounds('../data/archive/test_data.csv', '../data/archive/data/', 'phoneme_test')
