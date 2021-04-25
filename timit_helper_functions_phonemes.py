@@ -180,7 +180,7 @@ def parse_wrd_timestamps(wrd_path, verbose=False):
         phm_start, phm_end, phm = record[0].split(' ')
         wrd_start, wrd_end, wrd = record[1].split(' ')
         
-        if phm_start >= wrd_start and phm_start < wrd_end:
+        if int(phm_start) >= int(wrd_start) and int(phm_start) < int(wrd_end):
             
             final_content.append([phm_start, phm_end, phm, wrd])
                 
