@@ -19,27 +19,26 @@ file_names = listdir(directory)
 
 SAMPLERATE = 16000
 
-empty = pd.DataFrame(columns = ['recording','speaker','word','word_id','duration','start','end'])
-spoken = []
 
 for file in file_names:
     
     letter = file.split('.')[0]
     
-    df = pd.read_csv('directory/{}'.format(file))
+    df = pd.read_csv('{}/{}'.format(directory, file))
     
     recordings = df['recording'].unique()
     
     for recording in recordings:
     
+        print(recording, ' currently being parsed')
         df_recording = df[df['recording'] == recording]
         df_recording = df_recording.copy().reset_index(drop=True)
     
         # Only A has subfolders
         if letter == 'A':
-            data = wavfile.read('{directory}/{letter}/{recording}/{recording}.wav'.format(directory=directory,letter=letter,recording=recording))
+            sr, data = wavfile.read('../data/british_data_raw/Sounds/{letter}/{recording}/{recording}.wav'.format(directory=directory,letter=letter,recording=recording))
         else:
-            data = wavfile.read('{directory}/{letter}/{recording}.wav'.format(directory=directory,letter=letter,recording=recording))
+            sr, data = wavfile.read('../data/british_data_raw/Sounds/{letter}/{recording}.wav'.format(directory=directory,letter=letter,recording=recording))
 
 
         df_recording['end']=df_recording['duration'].cumsum()
@@ -47,15 +46,18 @@ for file in file_names:
         df_recording['sig_start'] = (df_recording['start']*SAMPLERATE).astype(int)
         df_recording['sig_end'] = (df_recording['end']*SAMPLERATE).astype(int)
         df_recording['word'] = df_recording['word'].str.lower()
-        df_recording['phoneme'] = df_recording['phoneme'].str.lower()        
+    
         df_recording = df_recording[['recording','speaker','phoneme','word','duration','end','start','sig_start','sig_end']]
-
-        for row in df_recording.iterrows():
+        
+        for i, row in df_recording.iterrows():
+            
+            if i % 1000 == 0:
+                print(i, ' phoneme')
             
             recording, speaker, phoneme, word, duration, end, start, sig_start, sig_end = row
             
-            output_file = '{phoneme}_{word}_{recording}_{speaker}_{start}_{end}'.format(phoneme=phoneme, speaker=speaker, recording=recording,
+            output_file = '{phoneme}_{word}_{recording}_{speaker}_{start}_{end}.wav'.format(phoneme=phoneme, speaker=speaker, recording=recording,
                                                                                         word=word, start=start, end=end)
             
             
-            wav.writefile(data=data[sig_start, sig_end], filename='british_phenomes/' + output_file, rate=SAMPLERATE)
+            wavfile.write(data=data[sig_start:sig_end], filename='british_phonemes/' + output_file, rate=SAMPLERATE)

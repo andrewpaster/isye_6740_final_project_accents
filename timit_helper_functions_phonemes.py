@@ -111,7 +111,7 @@ def phoneme_sounds(data_file,
                                                                    row['speaker_id'],
                                                                    row['filename']), axis=1)
 
-    wav_files = df['filepath'][0:100]
+    wav_files = df['filepath']
     print('reading audio data')
     audio_data = [wavfile.read(wav)[1] for wav in wav_files]
 
@@ -126,6 +126,7 @@ def phoneme_sounds(data_file,
         os.makedirs(output_directory)
 
     i = 1
+    print(len(word_aligned_audio), 'number of audio files to parse')
     for sentence in word_aligned_audio:
         for word_tup in sentence:
             timestamp = time.strftime("%m%d%Y%H%M%S", time.localtime())
@@ -135,6 +136,8 @@ def phoneme_sounds(data_file,
             # loudness = 'unknown-loudness'
             # lastname = 'lastname-speaker-id'
             # firstname = 'firstname-speaker-id'
+            if i % 2000 == 0:
+                print(i, ' records')
             nametag = 'timit'
             description = speaker + '-' + sentence + '-' + str(i)
             filename = phoneme + '_' + word + '_' + gender + '_' + description.replace('.PHN', '') + '_' + region
@@ -247,5 +250,5 @@ if __name__ == "__main__":
     # plot_wave_file('../data/archive/', 'MTPF0', 'SX335')
     # plot_wave_file('../data/archive/', 'MRDM0', 'SX335')
 
-    # phoneme_sounds('../data/archive/train_data.csv', '../data/archive/data/', 'phoneme_train')
-    phoneme_sounds('../data/archive/test_data.csv', '../data/archive/data/', 'phoneme_test')
+    phoneme_sounds('../data/archive/train_data.csv', '../data/archive/data/', 'phoneme_train')
+    # phoneme_sounds('../data/archive/test_data.csv', '../data/archive/data/', 'phoneme_test')
