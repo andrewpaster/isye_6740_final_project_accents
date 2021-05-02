@@ -4,14 +4,6 @@ Final project for ISYE 6740 comparing American accents
 
 # Resources
 
-## Reports
-
-[Proposal Draft](https://gtvault-my.sharepoint.com/:w:/r/personal/apaster3_gatech_edu/Documents/ISYE_6740_Group_Project/proposal_draft.docx?d=wc5bb2a0a42094387afe9d5307ceaa37e&csf=1&web=1&e=TO5MIv)
-
-
-[Group Project Shared Docs Folder](https://gtvault-my.sharepoint.com/:f:/r/personal/apaster3_gatech_edu/Documents/ISYE_6740_Group_Project?csf=1&web=1&e=sReXgP)
-
-
 ## Data
 
 [Kaggle Data Set](https://www.kaggle.com/mfekadu/darpa-timit-acousticphonetic-continuous-speech)
@@ -19,7 +11,6 @@ Final project for ISYE 6740 comparing American accents
 [British Accent Data Set](https://www.ortolang.fr/market/corpora/sldr000033/v3)
 * requires log in to download
 
-[Another British Accent Data Set](http://openslr.org/83)
 
 ## Tutorials
 [Code parsing accent data into words](https://www.kaggle.com/mfekadu/extract-all-words-from-timit)
